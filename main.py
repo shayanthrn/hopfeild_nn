@@ -133,18 +133,26 @@ def TLU(net):
         return -1
 
 def recall_async(pattern, w):
-    pass
+    x = np.copy(pattern)
+    x_next = np.copy(pattern)
+    for i in range(len(pattern)):
+        x_next[i] = TLU(x_next@w[:,i])
+    while not np.array_equal(x,x_next):
+        x = np.copy(x_next)
+        for i in range(len(pattern)):
+            x_next[i] = TLU(x_next@w[:,i])
+    return x_next
 
 def recall_sync(pattern, w):
     x = pattern
     x_next = np.vectorize(TLU)(x@w)
-    while (x!=x_next).all():
+    while not np.array_equal(x,x_next):
         x = x_next
         x_next = np.vectorize(TLU)(x@w)
     return x_next
 
 def noisy_pattern(pattern):
-    indexes = random.sample(range(len(pattern)), (len(pattern)*25)//100)
+    indexes = random.sample(range(len(pattern)), (len(pattern)*40)//100)
     for index in indexes:
         if(pattern[index] == 1):
             pattern[index] = -1
@@ -155,9 +163,9 @@ def noisy_pattern(pattern):
 
 patterns = [pattern_0.flatten(), pattern_1.flatten(), pattern_2.flatten(), pattern_3.flatten(), pattern_4.flatten(), pattern_6.flatten(), pattern_9.flatten(), pattern_d.flatten()]
 w = hebian_learning(patterns)
-noisy = noisy_pattern(pattern_d.flatten())
+noisy = noisy_pattern(pattern_4.flatten())
 print_pattern(noisy.reshape(12,10))
-result = recall_sync(noisy,w)
+result = recall_async(noisy,w)
 print_pattern(result.reshape(12,10))
 
 
